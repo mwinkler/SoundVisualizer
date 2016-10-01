@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioAnalyer", "AudioAnalyer\AudioAnalyer.csproj", "{AA6C0277-D836-482C-9181-E602537D964A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{643E7B80-ABB5-45FD-B4B6-E72C560D397A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PixelServer", "PixelServer\PixelServer.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixelServerConnector", "PixelServerConnector\PixelServerConnector.csproj", "{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA6C0277-D836-482C-9181-E602537D964A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Debug|x86.Build.0 = Debug|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Release|x86.ActiveCfg = Release|Any CPU
+		{AA6C0277-D836-482C-9181-E602537D964A}.Release|x86.Build.0 = Release|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Debug|x86.Build.0 = Debug|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Release|x86.ActiveCfg = Release|Any CPU
+		{643E7B80-ABB5-45FD-B4B6-E72C560D397A}.Release|x86.Build.0 = Release|Any CPU
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Any CPU.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Debug|x86.Build.0 = Debug|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F4832F0-29B3-44A6-AE33-5DDBFF6C30BC}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
