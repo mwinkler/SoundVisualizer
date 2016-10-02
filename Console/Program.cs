@@ -29,11 +29,11 @@ namespace Console
 
                 Csl.WriteLine();
 
-                Csl.WriteLine($"{data.Complex?.Length}");
+                Csl.WriteLine($"{data.Spectrum.Length}");
 
-                for (int i = 0; i < (data.Complex?.Length ?? 0); i++)
+                for (int i = 0; i < data.Spectrum.Length; i++)
                 {
-                    Csl.WriteLine($"x:{Math.Abs(data.Complex[i].X):0.000} y:{Math.Abs(data.Complex[i].Y):0.000}");
+                    Csl.WriteLine($"{Math.Abs(data.Spectrum[i]):0.000}");
                 }
 
                 //RenderBar(data.Band1.Normalized, 80,  $"Band1 : {data.Band1.Normalized:0.000} ");

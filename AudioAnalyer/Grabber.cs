@@ -18,7 +18,7 @@ namespace AudioAnalyer
             public DataSet Band2 { get; } = new DataSet(30);
             public DataSet Band3 { get; } = new DataSet(30);
             public DataSet Band4 { get; } = new DataSet(30);
-            public Complex[] Complex { get; set; }
+            public double[] Spectrum { get;set; }
         }
 
         public IWaveIn InputDevice = new WasapiLoopbackCapture();
@@ -27,8 +27,9 @@ namespace AudioAnalyer
         {
             var waveProvider = new BufferedWaveProvider(InputDevice.WaveFormat);
             var meteringProvider = new MeteringSampleProvider(waveProvider.ToSampleProvider(), InputDevice.WaveFormat.SampleRate / 20);
-            var aggregator = new SampleAggregator(waveProvider.ToSampleProvider(), 16) { PerformFFT = true };
+            var aggregator = new SampleAggregator(waveProvider.ToSampleProvider()) { PerformFFT = true };
             var bytsPerSample = InputDevice.WaveFormat.BitsPerSample / 8;
+            var specAnalyser = new SpectrumAnalyser();
             var data = new Data();
 
             //var longBufferLength = 48000;
@@ -38,8 +39,8 @@ namespace AudioAnalyer
             {
                 waveProvider.AddSamples(args.Buffer, 0, args.BytesRecorded);
                 
-                var meterBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
-                meteringProvider.Read(meterBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
+                //var meterBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
+                //meteringProvider.Read(meterBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
 
                 var aggBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
                 aggregator.Read(aggBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
@@ -68,7 +69,9 @@ namespace AudioAnalyer
 
             aggregator.FftCalculated += (object sender, FftEventArgs e) =>
             {
-                data.Complex = e.Result;
+                specAnalyser.Update(e.Result);
+
+                data.Spectrum = specAnalyser.Output;
 
                 process.Invoke(data);
             };

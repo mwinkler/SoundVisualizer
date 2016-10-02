@@ -51,6 +51,7 @@
     <Compile Include="Grabber.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SampleAggregator.cs" />
+    <Compile Include="SpectrumAnalyser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
