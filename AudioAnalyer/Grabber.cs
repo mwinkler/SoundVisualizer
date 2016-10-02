@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using NAudio.Dsp;
 
 namespace AudioAnalyer
 {
@@ -17,6 +18,7 @@ namespace AudioAnalyer
             public DataSet Band2 { get; } = new DataSet(30);
             public DataSet Band3 { get; } = new DataSet(30);
             public DataSet Band4 { get; } = new DataSet(30);
+            public Complex[] Complex { get; set; }
         }
 
         public IWaveIn InputDevice = new WasapiLoopbackCapture();
@@ -24,26 +26,31 @@ namespace AudioAnalyer
         public void Init(Action<Data> process)
         {
             var waveProvider = new BufferedWaveProvider(InputDevice.WaveFormat);
-            var samplingProvider = waveProvider.ToSampleProvider();
-            var meteringProvider = new MeteringSampleProvider(samplingProvider, InputDevice.WaveFormat.SampleRate / 20);
+            var meteringProvider = new MeteringSampleProvider(waveProvider.ToSampleProvider(), InputDevice.WaveFormat.SampleRate / 20);
+            var aggregator = new SampleAggregator(waveProvider.ToSampleProvider(), 16) { PerformFFT = true };
+            var bytsPerSample = InputDevice.WaveFormat.BitsPerSample / 8;
             var data = new Data();
-            var longBuffer = new Queue<float>(48000);
+
+            //var longBufferLength = 48000;
+            //var longBuffer = new FixedSizedQueue<float>(longBufferLength);
 
             InputDevice.DataAvailable += (sender, args) =>
             {
                 waveProvider.AddSamples(args.Buffer, 0, args.BytesRecorded);
                 
-                var buffer = new float[waveProvider.BufferedBytes / 4];
-                meteringProvider.Read(buffer, 0, waveProvider.BufferedBytes / 4);
+                var meterBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
+                meteringProvider.Read(meterBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
 
+                var aggBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
+                aggregator.Read(aggBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
 
-                //for (int i = 0; i < waveProvider.BufferedBytes; i++)
+                //for (int i = 0; i < buffer.Length; i++)
                 //{
-
+                //    longBuffer.Enqueue(buffer[i]);
                 //}
                 //longBuffer.Enqueue()
 
-                //data.Band1.Current = (float)GoertzelFilter(buffer, 250, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
+                //data.Band1.Current = (float)GoertzelFilter(longBuffer.ToArray(), 250, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
                 //data.Band2.Current = (float)GoertzelFilter(buffer, 500, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
                 //data.Band3.Current = (float)GoertzelFilter(buffer, 750, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
                 //data.Band4.Current = (float)GoertzelFilter(buffer, 1000, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
@@ -55,6 +62,13 @@ namespace AudioAnalyer
 
                 //if (data.Volume.Current == 0)
                 //    return;
+
+                process.Invoke(data);
+            };
+
+            aggregator.FftCalculated += (object sender, FftEventArgs e) =>
+            {
+                data.Complex = e.Result;
 
                 process.Invoke(data);
             };

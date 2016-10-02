@@ -9,13 +9,13 @@ namespace AudioAnalyer
     public class DataSet
     {
         private int _queueSize;
-        private Queue<float> _raw;
+        private FixedSizedQueue<float> _raw;
         private float _current;
 
         public DataSet(int queueSize)
         {
             _queueSize = queueSize;
-            _raw = new Queue<float>(queueSize);
+            _raw = new FixedSizedQueue<float>(queueSize);
         }
         //public float Max => _raw.Any() ? _raw.Max() : 0;
         public float Max { get; set; }
@@ -32,9 +32,6 @@ namespace AudioAnalyer
                 Min = Math.Min(Min, value);
 
                 _raw.Enqueue(value);
-
-                if (_raw.Count > _queueSize)
-                    _raw.Dequeue();
             }
         }
         public float Normalized

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AudioAnalyer;
 using PixelServerConnector;
 using System.Threading;
+using Csl = System.Console;
 
 namespace Console
 {
@@ -22,9 +23,19 @@ namespace Console
             {
                 var col = 0x127 * data.Volume.Normalized;
 
-                System.Console.SetCursorPosition(0, 8);
+                Csl.SetCursorPosition(0, 8);
 
                 RenderBar(data.Volume.Normalized, 80, $"Volume: {data.Volume.Normalized:0.000} ");
+
+                Csl.WriteLine();
+
+                Csl.WriteLine($"{data.Complex?.Length}");
+
+                for (int i = 0; i < (data.Complex?.Length ?? 0); i++)
+                {
+                    Csl.WriteLine($"x:{Math.Abs(data.Complex[i].X):0.000} y:{Math.Abs(data.Complex[i].Y):0.000}");
+                }
+
                 //RenderBar(data.Band1.Normalized, 80,  $"Band1 : {data.Band1.Normalized:0.000} ");
                 //RenderBar(data.Band2.Normalized, 80, $"Band2 : {data.Band2.Normalized:0.000} ");
                 //RenderBar(data.Band3.Normalized, 80, $"Band3 : {data.Band3.Normalized:0.000} ");
@@ -35,16 +46,16 @@ namespace Console
 
             var format = grabber.InputDevice.WaveFormat;
 
-            System.Console.WriteLine($"AverageBytesPerSecond: {format.AverageBytesPerSecond}");
-            System.Console.WriteLine($"BitsPerSample: {format.BitsPerSample}");
-            System.Console.WriteLine($"BlockAlign: {format.BlockAlign}");
-            System.Console.WriteLine($"Channels: {format.Channels}");
-            System.Console.WriteLine($"Encoding: {format.Encoding}");
-            System.Console.WriteLine($"ExtraSize: {format.ExtraSize}");
-            System.Console.WriteLine($"SampleRate: {format.SampleRate}");
+            Csl.WriteLine($"AverageBytesPerSecond: {format.AverageBytesPerSecond}");
+            Csl.WriteLine($"BitsPerSample: {format.BitsPerSample}");
+            Csl.WriteLine($"BlockAlign: {format.BlockAlign}");
+            Csl.WriteLine($"Channels: {format.Channels}");
+            Csl.WriteLine($"Encoding: {format.Encoding}");
+            Csl.WriteLine($"ExtraSize: {format.ExtraSize}");
+            Csl.WriteLine($"SampleRate: {format.SampleRate}");
 
 
-            System.Console.ReadLine();
+            Csl.ReadLine();
 
             grabber.Stop();
 
@@ -69,7 +80,7 @@ namespace Console
         static void RenderBar(float normalizedValue, int size, string prefix = null)
         {
             var calcSize = Math.Max((int)(normalizedValue * size), 1);
-            System.Console.WriteLine($"{prefix}{new string('█', calcSize)}{new string(' ', size - calcSize)}");
+            Csl.WriteLine($"{prefix}{new string('█', calcSize)}{new string(' ', size - calcSize)}");
         }
 
         static void Audio()
