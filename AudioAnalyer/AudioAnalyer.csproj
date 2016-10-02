@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataSet.cs" />
+    <Compile Include="Equalizer.cs" />
+    <Compile Include="EqualizerBand.cs" />
     <Compile Include="Grabber.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

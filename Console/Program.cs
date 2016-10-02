@@ -16,11 +16,19 @@ namespace Console
             var grabber = new Grabber();
             var connector = new SerialConnector("COM3", 115200);
 
+            connector.Open();
+
             grabber.Init(data =>
             {
-                System.Console.WriteLine($"Volume: {data.Volume}");
+                var col = 0x127 * data.Volume.Normalized;
 
-                var col = 0x128 * data.Volume;
+                System.Console.SetCursorPosition(0, 8);
+
+                RenderBar(data.Volume.Normalized, 80, $"Volume: {data.Volume.Normalized:0.000} ");
+                //RenderBar(data.Band1.Normalized, 80,  $"Band1 : {data.Band1.Normalized:0.000} ");
+                //RenderBar(data.Band2.Normalized, 80, $"Band2 : {data.Band2.Normalized:0.000} ");
+                //RenderBar(data.Band3.Normalized, 80, $"Band3 : {data.Band3.Normalized:0.000} ");
+                //RenderBar(data.Band4.Normalized, 80, $"Band4 : {data.Band4.Normalized:0.000} ");
 
                 connector.SetColor(0x0, 0x0, 0x0, (byte)col);
             });
@@ -56,6 +64,12 @@ namespace Console
             //connector.SetColor(0x0, 0x0, 0x0, 0x0);
 
             connector.Close();
+        }
+
+        static void RenderBar(float normalizedValue, int size, string prefix = null)
+        {
+            var calcSize = Math.Max((int)(normalizedValue * size), 1);
+            System.Console.WriteLine($"{prefix}{new string('█', calcSize)}{new string(' ', size - calcSize)}");
         }
 
         static void Audio()
