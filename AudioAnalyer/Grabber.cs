@@ -1,109 +1,123 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
-using NAudio.Dsp;
+using Un4seen.Bass;
+using Un4seen.BassWasapi;
 
 namespace AudioAnalyer
 {
-    public class Grabber : IDisposable
+    public class Grabber
     {
-        public class Data
+        public struct Data
         {
-            public DataSet Volume { get; } = new DataSet(30);
-            public DataSet Band1 { get; } = new DataSet(30);
-            public DataSet Band2 { get; } = new DataSet(30);
-            public DataSet Band3 { get; } = new DataSet(30);
-            public DataSet Band4 { get; } = new DataSet(30);
-            public double[] Spectrum { get;set; }
+            public byte[] Spectrum { get; set; }
+            public byte LeftLevel { get; set; }
+            public byte RightLevel { get; set; }
         }
 
-        public IWaveIn InputDevice = new WasapiLoopbackCapture();
+        private readonly int _grabIntervall;
+        private bool _running;
+        private readonly float[] _fft = new float[1024];
+        private readonly int _lines;                                    // number of spectrum lines
+        private Action<Data> _callback;
 
-        public void Init(Action<Data> process)
+        public Grabber(int grabIntervall = 25, int spectrumLines = 16)
         {
-            var waveProvider = new BufferedWaveProvider(InputDevice.WaveFormat);
-            var meteringProvider = new MeteringSampleProvider(waveProvider.ToSampleProvider(), InputDevice.WaveFormat.SampleRate / 20);
-            var aggregator = new SampleAggregator(waveProvider.ToSampleProvider()) { PerformFFT = true };
-            var bytsPerSample = InputDevice.WaveFormat.BitsPerSample / 8;
-            var specAnalyser = new SpectrumAnalyser();
-            var data = new Data();
+            _grabIntervall = grabIntervall;
+            _lines = spectrumLines;
+        }
 
-            //var longBufferLength = 48000;
-            //var longBuffer = new FixedSizedQueue<float>(longBufferLength);
+        public IDictionary<int, string> GetDevices()
+        {
+            var devices = new Dictionary<int, string>();
 
-            InputDevice.DataAvailable += (sender, args) =>
+            for (var i = 0; i < BassWasapi.BASS_WASAPI_GetDeviceCount(); i++)
             {
-                waveProvider.AddSamples(args.Buffer, 0, args.BytesRecorded);
-                
-                //var meterBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
-                //meteringProvider.Read(meterBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
+                var device = BassWasapi.BASS_WASAPI_GetDeviceInfo(i);
 
-                var aggBuffer = new float[waveProvider.BufferedBytes / bytsPerSample];
-                aggregator.Read(aggBuffer, 0, waveProvider.BufferedBytes / bytsPerSample);
+                if (device.IsEnabled && device.IsLoopback)
+                {
+                    devices.Add(i, device.name);
+                }
+            }
 
-                //for (int i = 0; i < buffer.Length; i++)
-                //{
-                //    longBuffer.Enqueue(buffer[i]);
-                //}
-                //longBuffer.Enqueue()
+            return devices;
+        }
 
-                //data.Band1.Current = (float)GoertzelFilter(longBuffer.ToArray(), 250, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
-                //data.Band2.Current = (float)GoertzelFilter(buffer, 500, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
-                //data.Band3.Current = (float)GoertzelFilter(buffer, 750, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
-                //data.Band4.Current = (float)GoertzelFilter(buffer, 1000, 0, buffer.Length, InputDevice.WaveFormat.SampleRate);
-            };
+        public void Init(int deviceIndex, Action<Data> callback)
+        {
+            _callback = callback;
 
-            meteringProvider.StreamVolume += (sender, args) =>
-            {
-                data.Volume.Current = args.MaxSampleValues.Max();
+            Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATETHREADS, false);
+            var result = Bass.BASS_Init(0, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
 
-                //if (data.Volume.Current == 0)
-                //    return;
+            if (!result)
+                throw new Exception("Init Error");
 
-                process.Invoke(data);
-            };
+            result = BassWasapi.BASS_WASAPI_Init(deviceIndex, 0, 0, BASSWASAPIInit.BASS_WASAPI_BUFFER, 1f, 0.05f, (buffer, length, user) => length, IntPtr.Zero);
 
-            aggregator.FftCalculated += (object sender, FftEventArgs e) =>
-            {
-                specAnalyser.Update(e.Result);
+            if (!result)
+                throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+            
+            BassWasapi.BASS_WASAPI_Start();
 
-                data.Spectrum = specAnalyser.Output;
+            _running = true;
 
-                process.Invoke(data);
-            };
-
-            InputDevice.StartRecording();
+            Task.Run(ProcessData);
         }
 
         public void Stop()
         {
-            InputDevice.StopRecording();
+            _running = false;
+
+            BassWasapi.BASS_WASAPI_Stop(true);
         }
 
-        public void Dispose()
+        private async Task ProcessData()
         {
-            InputDevice.Dispose();
-        }
-
-        private double GoertzelFilter(float[] samples, double freq, int start, int end, float sampleRate)
-        {
-            double sPrev = 0.0;
-            double sPrev2 = 0.0;
-            int i;
-            double normalizedfreq = freq / sampleRate;
-            double coeff = 2 * Math.Cos(2 * Math.PI * normalizedfreq);
-            for (i = start; i < end; i++)
+            while (_running)
             {
-                double s = samples[i] + coeff * sPrev - sPrev2;
-                sPrev2 = sPrev;
-                sPrev = s;
+                //get channel fft data
+                var ret = BassWasapi.BASS_WASAPI_GetData(_fft, (int)BASSData.BASS_DATA_FFT2048); 
+
+                if (ret >= -1)
+                {
+                    var b0 = 0;
+                    var spectrum = new byte[_lines];
+
+                    //computes the spectrum data, the code is taken from a bass_wasapi sample.
+                    for (var x = 0; x < _lines; x++)
+                    {
+                        var peak = 0f;
+                        var b1 = (int)Math.Pow(2, x * 10.0 / (_lines - 1));
+                        if (b1 > 1023) b1 = 1023;
+                        if (b1 <= b0) b1 = b0 + 1;
+                        for (; b0 < b1; b0++)
+                        {
+                            if (peak < _fft[1 + b0]) peak = _fft[1 + b0];
+                        }
+                        var y = (int)(Math.Sqrt(peak) * 3 * 255 - 4);
+                        if (y > 255) y = 255;
+                        if (y < 0) y = 0;
+                        spectrum[x] = (byte)y;
+                    }
+
+                    var level = BassWasapi.BASS_WASAPI_GetLevel();
+
+                    _callback.Invoke(new Data
+                    {
+                        Spectrum = spectrum,
+                        LeftLevel = (byte)((float)Utils.LowWord32(level) / ushort.MaxValue * byte.MaxValue),
+                        RightLevel = (byte)((float)Utils.HighWord32(level) / ushort.MaxValue * byte.MaxValue)
+                    });
+                }
+
+                await Task.Delay(_grabIntervall);
             }
-            double power = sPrev2 * sPrev2 + sPrev * sPrev - coeff * sPrev * sPrev2;
-            return power;
         }
     }
 }
