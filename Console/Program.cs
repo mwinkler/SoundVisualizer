@@ -15,7 +15,7 @@ namespace Console
         static void Main(string[] args)
         {
             var connector = new SerialConnector("COM3", 115200);
-            var grabber = new Grabber(spectrumLines: 8);
+            var grabber = new Grabber(spectrumLines: 16);
             var devices = grabber.GetDevices();
 
             // select device
@@ -35,7 +35,10 @@ namespace Console
             grabber.Init(devices.ElementAt(selectedPos).Key, data =>
             {
                 Csl.SetCursorPosition(0, 5);
+
                 Csl.WriteLine($"L: {data.LeftLevel:000} R: {data.RightLevel:000}");
+
+                Csl.WriteLine($"BPM: {data.BPM}");
 
                 for (var i = 0; i < data.Spectrum.Length; i++)
                 {

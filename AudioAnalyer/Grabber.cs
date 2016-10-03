@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Un4seen.Bass;
+using Un4seen.Bass.Misc;
 using Un4seen.BassWasapi;
 
 namespace AudioAnalyer
@@ -17,6 +18,7 @@ namespace AudioAnalyer
             public byte[] Spectrum { get; set; }
             public byte LeftLevel { get; set; }
             public byte RightLevel { get; set; }
+            public double BPM { get; set; }
         }
 
         private readonly int _grabIntervall;
@@ -24,6 +26,7 @@ namespace AudioAnalyer
         private readonly float[] _fft = new float[1024];
         private readonly int _lines;                                    // number of spectrum lines
         private Action<Data> _callback;
+        private BPMCounter _bpmCounter;
 
         public Grabber(int grabIntervall = 25, int spectrumLines = 16)
         {
@@ -52,17 +55,25 @@ namespace AudioAnalyer
         {
             _callback = callback;
 
+            // config
             Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATETHREADS, false);
+
+            // init bass
             var result = Bass.BASS_Init(0, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
 
             if (!result)
                 throw new Exception("Init Error");
 
+            // init wasapi
             result = BassWasapi.BASS_WASAPI_Init(deviceIndex, 0, 0, BASSWASAPIInit.BASS_WASAPI_BUFFER, 1f, 0.05f, (buffer, length, user) => length, IntPtr.Zero);
 
             if (!result)
                 throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+
+            // bpm counter
+            _bpmCounter = new BPMCounter(_grabIntervall, 44100);
             
+            // start
             BassWasapi.BASS_WASAPI_Start();
 
             _running = true;
@@ -86,10 +97,10 @@ namespace AudioAnalyer
 
                 if (ret >= -1)
                 {
+                    //computes the spectrum data, the code is taken from a bass_wasapi sample.
                     var b0 = 0;
                     var spectrum = new byte[_lines];
 
-                    //computes the spectrum data, the code is taken from a bass_wasapi sample.
                     for (var x = 0; x < _lines; x++)
                     {
                         var peak = 0f;
@@ -106,13 +117,19 @@ namespace AudioAnalyer
                         spectrum[x] = (byte)y;
                     }
 
+                    // channel level
                     var level = BassWasapi.BASS_WASAPI_GetLevel();
 
+                    // bpm
+                    //_bpmCounter.ProcessAudio(0, false);
+                    
+                    // callback
                     _callback.Invoke(new Data
                     {
                         Spectrum = spectrum,
                         LeftLevel = (byte)((float)Utils.LowWord32(level) / ushort.MaxValue * byte.MaxValue),
-                        RightLevel = (byte)((float)Utils.HighWord32(level) / ushort.MaxValue * byte.MaxValue)
+                        RightLevel = (byte)((float)Utils.HighWord32(level) / ushort.MaxValue * byte.MaxValue),
+                        BPM = _bpmCounter.BPM
                     });
                 }
 
