@@ -15,10 +15,16 @@ namespace Console
         static void Main(string[] args)
         {
             var connector = new SerialConnector("COM3", 115200);
-            var grabber = new Grabber(spectrumLines: 16);
-            var devices = grabber.GetDevices();
+            var grabber = new Grabber(spectrumLines: 6);
+
+            // open serial
+            connector.Open();
+
+            //connector.SetColor(0x0, 0x0, 0x0, 0xA0);
 
             // select device
+            var devices = grabber.GetDevices();
+
             for (var i = 0; i < devices.Count; i++)
             {
                 Csl.WriteLine($"[{i}] {devices.ElementAt(i).Value}");
@@ -28,10 +34,7 @@ namespace Console
                 ? int.Parse(Csl.ReadKey().KeyChar.ToString())
                 : 0;
 
-            // open serial
-            //connector.Open();
-
-            // init grabber
+            // init audio grabber
             grabber.Init(devices.ElementAt(selectedPos).Key, data =>
             {
                 Csl.SetCursorPosition(0, 5);
@@ -46,7 +49,10 @@ namespace Console
                     RenderBar(data.Spectrum[i] / 255f, 70);
                 }
 
-                connector.SetColor(0x0, 0x0, 0x0, (byte)((float)data.Spectrum[0] / 255 * 125));
+                // set color
+                var level = (byte)((float)data.Spectrum[0] / 255 * 125);
+
+                connector.SetColor(level, level, level, level);
             });
 
             Csl.ReadLine();
